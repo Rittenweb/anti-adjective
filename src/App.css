@@ -1,6 +1,7 @@
 .App {
-  text-align: center;
-  font-family: Helvetica, sans-serif;
+  text-align: left;
+  font-family: Calibri, sans-serif;
+  box-sizing: border-box;
 }
 
 .App-header {
@@ -10,14 +11,27 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: whitesmoke;
+  background-color: darkgrey;
+}
+
+.top-bar {
+  height: 4vh;
+  background-color: darkslategray;
+  width: 60vw;
+  min-width: 360px;
+  padding: 1vh 5vh;
+  text-align: center;
 }
 
 .editor {
-  font-size: 24px;
+  letter-spacing: -0.5px;
   background-color: #282c34;
-  width: 100vh;
-  height: 100vw;
+  width: 60vw;
+  min-width: 360px;
+  height: auto;
+  min-height: 72vh;
+  padding: 2vh 5vh 20vh;
 }
 
 .editor:focus {
