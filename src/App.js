@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import nlp from 'compromise';
 import Editor from './Editor';
 
 /*
