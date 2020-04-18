@@ -37,3 +37,8 @@
 .editor:focus {
   outline: none;
 }
+
+.adjective {
+  background-color: 'red';
+  border: 1px solid blue;
+}
