@@ -4,29 +4,35 @@ import nlp from 'compromise';
 
 export default function Editor() {
   let sent =
-    'I walked briskly, swiftly to the store. A happy bird saw me. It was happy.';
+    'I walked briskly, swiftly to the store. The happy bird saw me. It was happy.';
 
   let words = nlp(sent);
+
+  let terms = [];
+
   words.match('#Verb #Adverb+').forEach((term) => {
-    term.prepend('<span>');
+    terms.push(term.text());
+    term.prepend(`<span class="adjective" dataset-index=${terms.length - 1}>`);
     term.append('</span>');
   });
   words.match('#Adverb+ #Verb').forEach((term) => {
-    term.prepend('<span>');
+    terms.push(term.text());
+    term.prepend(`<span class="adjective" dataset-index=${terms.length - 1}>`);
     term.append('</span>');
   });
   words.match('#Adjective+ #Noun').forEach((term) => {
-    term.prepend('<span>');
+    terms.push(term.text());
+    term.prepend(`<span class="adjective" dataset-index=${terms.length - 1}>`);
     term.append('</span>');
   });
-  words.match('#Noun #Adjective+').forEach((term) => {
-    term.prepend('<span>');
-    term.append('</span>');
-  });
+
   words.match('#Adjective').forEach((term) => {
-    term.prepend('<span>');
+    terms.push(term.text());
+    term.prepend(`<span class="adjective" dataset-index=${terms.length - 1}>`);
     term.append('</span>');
   });
+
+  console.log(terms);
 
   const [text, setText] = useState('');
 
@@ -47,7 +53,6 @@ export default function Editor() {
       className='editor'
       onKeyUp={persistingChangeFunction}>
       <span dangerouslySetInnerHTML={{ __html: words.text() }}></span>
-      <span className='adjective'>"The other span"</span>
     </div>
   );
 }
