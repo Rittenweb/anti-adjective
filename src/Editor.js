@@ -6,12 +6,21 @@ export default function Editor() {
   const [terms, setTerms] = useState('');
   const [caretPosition, setCaretPosition] = useState(0);
 
+  let escapedHtml = {
+    '<span': 'Greeting',
+    'class="adjective">': 'Greeting',
+    '</span>': 'Greeting',
+  };
+
   const changeFunction = function (e) {
     //first: save innerText to localStorage
     //let range = document.createRange();
     let sel = document.getSelection();
     let anchorNodeNumber;
     const editor = e.target;
+    let offset = sel.anchorOffset;
+    let currentNodeStart = 0;
+
     for (let i = 0; i < editor.childNodes.length; i++) {
       let currentChildNode = editor.childNodes[i];
       if (currentChildNode.nodeType !== Node.TEXT_NODE) {
@@ -21,12 +30,34 @@ export default function Editor() {
         anchorNodeNumber = i;
         break;
       }
+
+      currentNodeStart += currentChildNode.length - 1;
     }
-    console.log('anchor number' + anchorNodeNumber);
-    let offset = sel.anchorOffset;
-    let words = nlp(e.target.innerText);
+
+    //get total length of current locationInText
+    //get distance back current node reaches from current locationInText
+    //if current node is cut off,
+
+    let words = nlp(e.target.innerText, escapedHtml);
     let adjs = words.match('#Adjective');
+
+    const textAddedValue = 31;
+    let textAddedNum = 0;
+
     adjs.forEach((el) => {
+      let elIndex =
+        el.out('offset')[0].offset.start - textAddedNum * textAddedValue;
+
+      if (elIndex > currentNodeStart && elIndex < currentNodeStart + offset) {
+        anchorNodeNumber += 2;
+        offset =
+          currentNodeStart +
+          offset -
+          elIndex -
+          el.out('offset')[0].offset.length; // 7 is length of </span>
+      }
+
+      textAddedNum++;
       el.prepend('<span class="adjective">');
       el.append('</span>');
     });
@@ -42,14 +73,12 @@ export default function Editor() {
     e.target.innerText = '';
     */
     setTerms(words.text());
-    /*
-    range.setStart(e.target, 1);
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    */
+
     let newAnchorNode;
-    if (editor.childNodes[anchorNodeNumber].nodeType !== Node.TEXT_NODE) {
+    if (
+      editor.hasChildNodes() &&
+      editor.childNodes[anchorNodeNumber].nodeType !== Node.TEXT_NODE
+    ) {
       newAnchorNode = editor.childNodes[anchorNodeNumber].childNodes[0];
     } else {
       newAnchorNode = editor.childNodes[anchorNodeNumber];
