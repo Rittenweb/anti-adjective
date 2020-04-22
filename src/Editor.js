@@ -3,7 +3,7 @@ import debounce from './debounce';
 import nlp from 'compromise';
 
 export default function Editor() {
-  const [terms, setTerms] = useState('');
+  const [terms, setTerms] = useState(localStorage.getItem('text') || '');
 
   let escapedHtml = {
     '<span': 'Greeting',
@@ -21,6 +21,8 @@ export default function Editor() {
     let currentNodeStart = 0;
 
     for (let i = 0; i < editor.childNodes.length; i++) {
+      localStorage.setItem('text', e.target.innerText);
+
       let currentChildNode = editor.childNodes[i];
       if (currentChildNode.nodeType !== Node.TEXT_NODE) {
         currentChildNode = currentChildNode.childNodes[0];
