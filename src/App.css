@@ -34,6 +34,10 @@
   padding: 2vh 5vh 20vh;
 }
 
+pre {
+  white-space: pre-wrap;
+}
+
 .editor:focus {
   outline: none;
 }
