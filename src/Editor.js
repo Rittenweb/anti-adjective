@@ -4,7 +4,6 @@ import nlp from 'compromise';
 
 export default function Editor() {
   const [terms, setTerms] = useState('');
-  const [caretPosition, setCaretPosition] = useState(0);
 
   let escapedHtml = {
     '<span': 'Greeting',
@@ -31,7 +30,7 @@ export default function Editor() {
         break;
       }
 
-      currentNodeStart += currentChildNode.length - 1;
+      currentNodeStart += currentChildNode.length;
     }
 
     //get total length of current locationInText
@@ -44,23 +43,27 @@ export default function Editor() {
     const textAddedValue = 31;
     let textAddedNum = 0;
 
+    let insertedIntoCurrentNode = 0;
+
     adjs.forEach((el) => {
       let elIndex =
         el.out('offset')[0].offset.start - textAddedNum * textAddedValue;
+      let elLength = el.out('offset')[0].offset.length;
 
       if (elIndex > currentNodeStart && elIndex < currentNodeStart + offset) {
         anchorNodeNumber += 2;
-        offset =
-          currentNodeStart +
-          offset -
-          elIndex -
-          el.out('offset')[0].offset.length; // 7 is length of </span>
+        offset = currentNodeStart + offset - elIndex - elLength;
+        currentNodeStart = elIndex + elLength; //length of </span>
+        insertedIntoCurrentNode++;
       }
 
       textAddedNum++;
       el.prepend('<span class="adjective">');
       el.append('</span>');
     });
+
+    offset += (insertedIntoCurrentNode - 1) * 2; //not sure why it works but it does...
+
     /*
     let newTerms = words
       .splitBefore('#Verb #Adverb+')
@@ -75,13 +78,12 @@ export default function Editor() {
     setTerms(words.text());
 
     let newAnchorNode;
-    if (
-      editor.hasChildNodes() &&
-      editor.childNodes[anchorNodeNumber].nodeType !== Node.TEXT_NODE
-    ) {
-      newAnchorNode = editor.childNodes[anchorNodeNumber].childNodes[0];
-    } else {
-      newAnchorNode = editor.childNodes[anchorNodeNumber];
+    if (editor.hasChildNodes()) {
+      if (editor.childNodes[anchorNodeNumber].nodeType !== Node.TEXT_NODE) {
+        newAnchorNode = editor.childNodes[anchorNodeNumber].childNodes[0];
+      } else {
+        newAnchorNode = editor.childNodes[anchorNodeNumber];
+      }
     }
     sel.setPosition(newAnchorNode, offset);
   };
