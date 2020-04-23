@@ -4,8 +4,11 @@ import nlp from 'compromise';
 import nlpo from 'compromise-output';
 
 export default function Editor() {
-  const [terms, setTerms] = useState(localStorage.getItem('text') || '');
-  const [numMatches, setNumMatches] = useState(0);
+  const [terms, setTerms] = useState(
+    localStorage.getItem('text') || '<pre></pre>'
+  );
+  const [matches, setMatches] = useState([]);
+  const [matchSelected, setMatchSelected] = useState(0);
 
   const nlpHtml = nlp.extend(nlpo);
 
@@ -15,19 +18,15 @@ export default function Editor() {
 
     let words = nlpHtml(editorNode.innerText);
     let adjNum = words.match('#Adjective').out('array').length;
+    let withMatches = words.html({
+      '#Adjective': `adjective`,
+    });
 
-    //Do you need to check if anchornode is an adjective? If it was changed, it will be reflected in adjNum
-    if (
-      adjNum === numMatches &&
-      !sel.anchorNode.parentNode.classList.contains('adjective')
-    ) {
-      localStorage.setItem('text', editorNode.innerText);
+    if (adjNum <= matches.length) {
+      setMatches([...document.querySelectorAll('.adjective')]);
+      localStorage.setItem('text', withMatches);
       return;
     }
-
-    setNumMatches(adjNum);
-
-    console.log('ran');
 
     let nodeOffsetFromBack;
 
@@ -49,28 +48,6 @@ export default function Editor() {
     }
 
     /*
-    adjs.forEach((match) => {
-      let matchIndex =
-        match.out('offset')[0].offset.start - textAddedNum * textAddedValue;
-      let matchLength = match.out('offset')[0].offset.length;
-
-      if (
-        matchIndex > currentNodeStart &&
-        matchIndex < currentNodeStart + offset
-      ) {
-        anchorNodeNumber += 2;
-        offset = currentNodeStart + offset - matchIndex - matchLength;
-        currentNodeStart = matchIndex + matchLength;
-        insertedIntoCurrentNode++;
-      }
-
-      textAddedNum++;
-      match.prepend('<span class="adjective">');
-      match.append('</span>');
-    });
-    */
-
-    /*
     let newTerms = words
       .splitBefore('#Verb #Adverb+')
       .splitAfter('#Verb #Adverb+')
@@ -82,10 +59,6 @@ export default function Editor() {
     e.target.innerText = '';
     */
 
-    let withMatches = words.html({
-      '#Adjective': `adjective`,
-    });
-
     localStorage.setItem('text', withMatches);
     setTerms(withMatches);
 
@@ -96,10 +69,17 @@ export default function Editor() {
       nodeOffsetFromBack = newPreNodeChildrenLength;
     }
 
+    if (typeof nodeOffsetFromBack !== 'number') {
+      nodeOffsetFromBack = 1;
+    }
+
     let targetTextNode =
       newPreNodeChildren[newPreNodeChildrenLength - nodeOffsetFromBack]
         .childNodes[0];
     sel.setPosition(targetTextNode, targetTextNode.length);
+
+    setMatches([...document.querySelectorAll('.adjective')]);
+    setMatchSelected(0);
   };
 
   const debouncedChangeFunction = debounce(changeFunction, 2000);
@@ -119,8 +99,19 @@ export default function Editor() {
   };
 
   const specialCommandsFunction = function (e) {
-    if (e.key === 'Alt') {
-      //do real stuff.
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (matches.length) {
+        let newMatchNumber;
+        if (matchSelected === 0 || matchSelected === 1) {
+          newMatchNumber = matches.length;
+        } else {
+          newMatchNumber = matchSelected - 1;
+        }
+        setMatchSelected(newMatchNumber);
+        let sel = document.getSelection();
+        sel.selectAllChildren(matches[newMatchNumber - 1]); //-1 because matchSelected is stored is one greater than index in matches
+      }
     }
   };
 
@@ -137,18 +128,8 @@ export default function Editor() {
       spellCheck='true'
       className='editor'
       onKeyUp={persistingChangeFunction}
-      onKeyPress={specialCommandsFunction}
+      onKeyDown={specialCommandsFunction}
       onPaste={pastePlainText}
-      dangerouslySetInnerHTML={{ __html: terms }}>
-      {/* {terms.map((term, index) =>
-        Boolean(nlp(term).match('#Verb #Adverb+').text()) ||
-        Boolean(nlp(term).match('#Adverb+ #Verb').text()) ||
-        Boolean(nlp(term).match('#Adjective+ #Noun').text()) ? (
-          <span className='adjective'>{`${term} `}</span>
-        ) : (
-          <span>{`${term} `}</span>
-        )
-      )} */}
-    </div>
+      dangerouslySetInnerHTML={{ __html: terms }}></div>
   );
 }
