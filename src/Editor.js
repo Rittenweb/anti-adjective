@@ -5,12 +5,29 @@ import nlpo from 'compromise-output';
 
 export default function Editor() {
   const [terms, setTerms] = useState(localStorage.getItem('text') || '');
+  const [numMatches, setNumMatches] = useState(0);
 
   const nlpHtml = nlp.extend(nlpo);
 
   const changeFunction = function (e) {
     let sel = document.getSelection();
     const editorNode = e.target;
+
+    let words = nlpHtml(editorNode.innerText);
+    let adjNum = words.match('#Adjective').out('array').length;
+
+    //Do you need to check if anchornode is an adjective? If it was changed, it will be reflected in adjNum
+    if (
+      adjNum === numMatches &&
+      !sel.anchorNode.parentNode.classList.contains('adjective')
+    ) {
+      localStorage.setItem('text', editorNode.innerText);
+      return;
+    }
+
+    setNumMatches(adjNum);
+
+    console.log('ran');
 
     let nodeOffsetFromBack;
 
@@ -30,12 +47,6 @@ export default function Editor() {
         break;
       }
     }
-
-    let words = nlpHtml(e.target.innerText);
-    let withMatches = words.html({
-      '#Adjective': `adjective`,
-    });
-    let adjs = words.match('#Adjective');
 
     /*
     adjs.forEach((match) => {
@@ -70,6 +81,10 @@ export default function Editor() {
       .out('array');
     e.target.innerText = '';
     */
+
+    let withMatches = words.html({
+      '#Adjective': `adjective`,
+    });
 
     localStorage.setItem('text', withMatches);
     setTerms(withMatches);
