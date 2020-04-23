@@ -8,31 +8,27 @@ export default function Editor() {
 
   const nlpHtml = nlp.extend(nlpo);
 
-  /*
-  let escapedHtml = {
-    '<span': 'Greeting',
-    'class="adjective">': 'Greeting',
-    '</span>': 'Greeting',
-  };
-  */
-
   const changeFunction = function (e) {
     let sel = document.getSelection();
-    const editorNode = e.target.childNodes[0];
-    let offset = sel.anchorOffset;
-    let currentNodeStart = 0;
+    const editorNode = e.target;
 
-    let anchorNodeNumber;
+    let nodeOffsetFromBack;
+
+    let preNodeChildren = [];
 
     for (let i = 0; i < editorNode.childNodes.length; i++) {
-      let currentChildTextNode = editorNode.childNodes[i].childNodes[0];
+      preNodeChildren = preNodeChildren.concat(
+        ...editorNode.childNodes[i].childNodes
+      );
+    }
+
+    for (let i = preNodeChildren.length - 1; i >= 0; i--) {
+      let currentChildTextNode = preNodeChildren[i].childNodes[0];
 
       if (currentChildTextNode === sel.anchorNode) {
-        anchorNodeNumber = i;
+        nodeOffsetFromBack = preNodeChildren.length - i;
         break;
       }
-
-      //currentNodeStart += currentChildTextNode.length;
     }
 
     let words = nlpHtml(e.target.innerText);
@@ -40,11 +36,6 @@ export default function Editor() {
       '#Adjective': `adjective`,
     });
     let adjs = words.match('#Adjective');
-
-    const textAddedValue = 31;
-    let textAddedNum = 0;
-
-    let insertedIntoCurrentNode = 0;
 
     /*
     adjs.forEach((match) => {
@@ -68,8 +59,6 @@ export default function Editor() {
     });
     */
 
-    //offset += (insertedIntoCurrentNode - 1) * 2; //not sure why it works but it does...
-
     /*
     let newTerms = words
       .splitBefore('#Verb #Adverb+')
@@ -85,11 +74,17 @@ export default function Editor() {
     localStorage.setItem('text', withMatches);
     setTerms(withMatches);
 
-    console.log(editorNode.childNodes[anchorNodeNumber]);
-    console.log(editorNode.childNodes[anchorNodeNumber].childNodes[0]);
+    let newPreNodeChildren = editorNode.childNodes[0].childNodes;
+    let newPreNodeChildrenLength = newPreNodeChildren.length;
 
-    let targetTextNode = editorNode.childNodes[anchorNodeNumber].childNodes[0];
-    sel.setPosition(targetTextNode, targetTextNode.length - 1);
+    if (nodeOffsetFromBack > newPreNodeChildrenLength) {
+      nodeOffsetFromBack = newPreNodeChildrenLength;
+    }
+
+    let targetTextNode =
+      newPreNodeChildren[newPreNodeChildrenLength - nodeOffsetFromBack]
+        .childNodes[0];
+    sel.setPosition(targetTextNode, targetTextNode.length);
   };
 
   const debouncedChangeFunction = debounce(changeFunction, 2000);
@@ -109,14 +104,9 @@ export default function Editor() {
   };
 
   const specialCommandsFunction = function (e) {
-    /*
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.execCommand('insertHTML', false, '<br/>');
-    } else if (e.key === 'Alt') {
+    if (e.key === 'Alt') {
       //do real stuff.
     }
-    */
   };
 
   const pastePlainText = function (e) {
