@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
@@ -11,6 +11,48 @@ export default function Editor() {
   const [matchSelected, setMatchSelected] = useState(0);
 
   const nlpHtml = nlp.extend(nlpo);
+
+  let matchAlternates = [];
+
+  useEffect(() => {
+    matches.forEach((match) => {
+      let alternatesArr = [];
+      fetch(`https://api.datamuse.com/words?rel_jja=${match.innerText}`, {
+        cache: 'no-cache',
+      })
+        .then((data) => {
+          return data.json();
+        })
+        .then((data) => {
+          let nounsArr = [];
+          data.forEach((alternate) => {
+            nounsArr.push(alternate.word);
+          });
+          alternatesArr.push(nounsArr);
+          return fetch(`https://api.datamuse.com/words?ml=${match.innerText}`);
+        })
+        .then((data) => {
+          return data.json();
+        })
+        .then((data) => {
+          let verbsArr = [];
+          data.forEach((alternate) => {
+            if (alternate.tags.includes('v')) {
+              let lexicon = {};
+              lexicon[`${alternate.word}`] = 'Verb';
+              let infinitive = nlp(alternate.word, lexicon)
+                .verbs()
+                .toInfinitive()
+                .text();
+              verbsArr.push(infinitive ? infinitive : alternate.word);
+            }
+          });
+          alternatesArr.push(verbsArr);
+          matchAlternates.push(alternatesArr);
+        });
+    });
+    console.log(matchAlternates);
+  }, [matchAlternates, matches]);
 
   const changeFunction = function (e) {
     let sel = document.getSelection();
