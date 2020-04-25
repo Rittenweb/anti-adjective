@@ -7,19 +7,39 @@
 .App-header {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: whitesmoke;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar {
+  width: 18vw;
+  position: fixed;
+  top: 0;
+  bottom: 0;
   background-color: darkgrey;
+}
+
+.sidebar-left {
+  left: 0;
+}
+
+.sidebar-right {
+  right: 0;
 }
 
 .top-bar {
   height: 4vh;
   background-color: darkslategray;
   width: 60vw;
-  min-width: 360px;
+  min-width: 320px;
   padding: 1vh 5vh;
   text-align: center;
 }
@@ -28,7 +48,7 @@
   letter-spacing: -0.5px;
   background-color: #282c34;
   width: 60vw;
-  min-width: 360px;
+  min-width: 320px;
   height: auto;
   min-height: 72vh;
   padding: 2vh 5vh 20vh;

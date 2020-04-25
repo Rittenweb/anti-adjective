@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './App.css';
 import Editor from './Editor';
 
@@ -83,10 +83,7 @@ function App() {
 
   return (
     <div className='App'>
-      <header className='App-header'>
-        <div className='top-bar'>A N T I - A D J E C T I V E</div>
-        <Editor />
-      </header>
+      <Editor />
     </div>
   );
 }

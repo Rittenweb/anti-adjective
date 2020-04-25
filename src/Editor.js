@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
+import Sidebar from './Sidebar';
 
 export default function Editor() {
   const [terms, setTerms] = useState(
@@ -51,10 +52,12 @@ export default function Editor() {
           matchAlternates.push(alternatesArr);
         });
     });
-    console.log(matchAlternates);
   }, [matchAlternates, matches]);
 
+  console.log(matchAlternates);
+
   const changeFunction = function (e) {
+    setMatchSelected(0);
     let sel = document.getSelection();
     const editorNode = e.target;
 
@@ -164,14 +167,30 @@ export default function Editor() {
     document.execCommand('insertHTML', false, text);
   };
 
+  console.log(matchAlternates);
+  console.log('rendered');
+
   return (
-    <div
-      contentEditable='true'
-      spellCheck='true'
-      className='editor'
-      onKeyUp={persistingChangeFunction}
-      onKeyDown={specialCommandsFunction}
-      onPaste={pastePlainText}
-      dangerouslySetInnerHTML={{ __html: terms }}></div>
+    <header className='App-header'>
+      <Sidebar
+        side='left'
+        alternates={matchSelected ? matchAlternates[matchSelected][0] : ''}
+      />
+      <div className='center'>
+        <div className='top-bar'>A N T I - A D J E C T I V E</div>
+        <div
+          contentEditable='true'
+          spellCheck='true'
+          className='editor'
+          onKeyUp={persistingChangeFunction}
+          onKeyDown={specialCommandsFunction}
+          onPaste={pastePlainText}
+          dangerouslySetInnerHTML={{ __html: terms }}></div>
+      </div>
+      <Sidebar
+        side='right'
+        alternates={matchSelected ? matchAlternates[matchSelected][1] : ''}
+      />
+    </header>
   );
 }
