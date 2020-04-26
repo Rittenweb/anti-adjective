@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
@@ -12,48 +12,7 @@ export default function Editor() {
   );
   const [matchSelected, setMatchSelected] = useState(0);
   const matchesRef = useRef([]);
-  const matchAlternatesRef = useRef([]);
-
-  useEffect(() => {
-    matchesRef.current.forEach((match) => {
-      let alternatesArr = [];
-      fetch(`https://api.datamuse.com/words?rel_jja=${match.innerText}`, {
-        cache: 'no-cache',
-      })
-        .then((data) => {
-          return data.json();
-        })
-        .then((data) => {
-          let nounsArr = [];
-          data.forEach((alternate) => {
-            nounsArr.push(alternate.word);
-          });
-          alternatesArr.push(nounsArr);
-          return fetch(`https://api.datamuse.com/words?ml=${match.innerText}`);
-        })
-        .then((data) => {
-          return data.json();
-        })
-        .then((data) => {
-          let verbsArr = [];
-          data.forEach((alternate) => {
-            if (alternate.tags.includes('v')) {
-              let lexicon = {};
-              lexicon[`${alternate.word}`] = 'Verb';
-              let infinitive = nlp(alternate.word, lexicon)
-                .verbs()
-                .toInfinitive()
-                .text();
-              verbsArr.push(infinitive ? infinitive : alternate.word);
-            }
-          });
-          alternatesArr.push(verbsArr);
-          matchAlternatesRef.current.push(alternatesArr);
-        });
-    });
-  }, []);
-
-  console.log(matchAlternatesRef);
+  const matchAlternatesRef = useRef({});
 
   const changeFunction = function (e) {
     setMatchSelected(0);
@@ -125,6 +84,47 @@ export default function Editor() {
     matchesRef.current = [...document.querySelectorAll('.adjective')];
 
     setMatchSelected(0);
+
+    matchesRef.current.forEach((match, index) => {
+      console.log('called');
+      let alternatesArr = [];
+      fetch(`https://api.datamuse.com/words?rel_jja=${match.innerText}`, {
+        cache: 'no-cache',
+      })
+        .then((data) => {
+          return data.json();
+        })
+        .then((data) => {
+          let nounsArr = [];
+          data.forEach((alternate) => {
+            nounsArr.push(alternate.word);
+          });
+          alternatesArr.push(nounsArr);
+          return fetch(`https://api.datamuse.com/words?ml=${match.innerText}`);
+        })
+        .then((data) => {
+          return data.json();
+        })
+        .then((data) => {
+          let verbsArr = [];
+          data.forEach((alternate) => {
+            if (alternate.tags.includes('v')) {
+              let lexicon = {};
+              lexicon[`${alternate.word}`] = 'Verb';
+              let infinitive = nlp(alternate.word, lexicon)
+                .verbs()
+                .toInfinitive()
+                .text();
+              let newWord = infinitive ? infinitive : alternate.word;
+              if (!verbsArr.includes(newWord)) {
+                verbsArr.push(newWord);
+              }
+            }
+          });
+          alternatesArr.push(verbsArr);
+          matchAlternatesRef.current[match.innerText] = alternatesArr;
+        });
+    });
   };
 
   const debouncedChangeFunction = debounce(changeFunction, 2000);
@@ -135,7 +135,7 @@ export default function Editor() {
       e.key === 'ArrowRight' ||
       e.key === 'ArrowUp' ||
       e.key === 'ArrowDown' ||
-      e.key === 'Alt'
+      e.key === 'Tab'
     ) {
       return;
     } else {
@@ -155,7 +155,7 @@ export default function Editor() {
         }
         setMatchSelected(newMatchNumber);
         let sel = document.getSelection();
-        sel.selectAllChildren(matchesRef.current[newMatchNumber - 1]); //-1 because matchSelected is stored is one greater than index in matches
+        sel.selectAllChildren(matchesRef.current[newMatchNumber - 1]);
       }
     }
   };
@@ -167,7 +167,6 @@ export default function Editor() {
     document.execCommand('insertHTML', false, text);
   };
 
-  console.log(matchAlternatesRef.current);
   console.log('rendered');
 
   return (
@@ -175,7 +174,14 @@ export default function Editor() {
       <Sidebar
         side='left'
         alternates={
-          matchSelected ? matchAlternatesRef.current[matchSelected][0] : ''
+          matchSelected &&
+          matchAlternatesRef.current[
+            matchesRef.current[matchSelected - 1].innerText
+          ]
+            ? matchAlternatesRef.current[
+                matchesRef.current[matchSelected - 1].innerText
+              ][0]
+            : ''
         }
       />
       <div className='center'>
@@ -192,7 +198,14 @@ export default function Editor() {
       <Sidebar
         side='right'
         alternates={
-          matchSelected ? matchAlternatesRef.current[matchSelected][1] : ''
+          matchSelected &&
+          matchAlternatesRef.current[
+            matchesRef.current[matchSelected - 1].innerText
+          ]
+            ? matchAlternatesRef.current[
+                matchesRef.current[matchSelected - 1].innerText
+              ][1]
+            : ''
         }
       />
     </header>
