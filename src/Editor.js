@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
 import Sidebar from './Sidebar';
 
 export default function Editor() {
-  const [terms, setTerms] = useState(
-    localStorage.getItem('text') || '<pre></pre>'
-  );
-  const [matches, setMatches] = useState([]);
-  const [matchSelected, setMatchSelected] = useState(0);
-
   const nlpHtml = nlp.extend(nlpo);
 
-  let matchAlternates = [];
+  const [text, setText] = useState(
+    localStorage.getItem('text') || '<pre></pre>'
+  );
+  const [matchSelected, setMatchSelected] = useState(0);
+  const matchesRef = useRef([]);
+  const matchAlternatesRef = useRef([]);
 
   useEffect(() => {
-    matches.forEach((match) => {
+    matchesRef.current.forEach((match) => {
       let alternatesArr = [];
       fetch(`https://api.datamuse.com/words?rel_jja=${match.innerText}`, {
         cache: 'no-cache',
@@ -49,12 +48,12 @@ export default function Editor() {
             }
           });
           alternatesArr.push(verbsArr);
-          matchAlternates.push(alternatesArr);
+          matchAlternatesRef.current.push(alternatesArr);
         });
     });
-  }, [matchAlternates, matches]);
+  }, []);
 
-  console.log(matchAlternates);
+  console.log(matchAlternatesRef);
 
   const changeFunction = function (e) {
     setMatchSelected(0);
@@ -67,8 +66,8 @@ export default function Editor() {
       '#Adjective': `adjective`,
     });
 
-    if (adjNum <= matches.length) {
-      setMatches([...document.querySelectorAll('.adjective')]);
+    if (adjNum <= matchesRef.current.length) {
+      matchesRef.current = [...document.querySelectorAll('.adjective')];
       localStorage.setItem('text', withMatches);
       return;
     }
@@ -105,7 +104,7 @@ export default function Editor() {
     */
 
     localStorage.setItem('text', withMatches);
-    setTerms(withMatches);
+    setText(withMatches);
 
     let newPreNodeChildren = editorNode.childNodes[0].childNodes;
     let newPreNodeChildrenLength = newPreNodeChildren.length;
@@ -123,7 +122,8 @@ export default function Editor() {
         .childNodes[0];
     sel.setPosition(targetTextNode, targetTextNode.length);
 
-    setMatches([...document.querySelectorAll('.adjective')]);
+    matchesRef.current = [...document.querySelectorAll('.adjective')];
+
     setMatchSelected(0);
   };
 
@@ -146,16 +146,16 @@ export default function Editor() {
   const specialCommandsFunction = function (e) {
     if (e.key === 'Tab') {
       e.preventDefault();
-      if (matches.length) {
+      if (matchesRef.current.length) {
         let newMatchNumber;
         if (matchSelected === 0 || matchSelected === 1) {
-          newMatchNumber = matches.length;
+          newMatchNumber = matchesRef.current.length;
         } else {
           newMatchNumber = matchSelected - 1;
         }
         setMatchSelected(newMatchNumber);
         let sel = document.getSelection();
-        sel.selectAllChildren(matches[newMatchNumber - 1]); //-1 because matchSelected is stored is one greater than index in matches
+        sel.selectAllChildren(matchesRef.current[newMatchNumber - 1]); //-1 because matchSelected is stored is one greater than index in matches
       }
     }
   };
@@ -167,14 +167,16 @@ export default function Editor() {
     document.execCommand('insertHTML', false, text);
   };
 
-  console.log(matchAlternates);
+  console.log(matchAlternatesRef.current);
   console.log('rendered');
 
   return (
     <header className='App-header'>
       <Sidebar
         side='left'
-        alternates={matchSelected ? matchAlternates[matchSelected][0] : ''}
+        alternates={
+          matchSelected ? matchAlternatesRef.current[matchSelected][0] : ''
+        }
       />
       <div className='center'>
         <div className='top-bar'>A N T I - A D J E C T I V E</div>
@@ -185,11 +187,13 @@ export default function Editor() {
           onKeyUp={persistingChangeFunction}
           onKeyDown={specialCommandsFunction}
           onPaste={pastePlainText}
-          dangerouslySetInnerHTML={{ __html: terms }}></div>
+          dangerouslySetInnerHTML={{ __html: text }}></div>
       </div>
       <Sidebar
         side='right'
-        alternates={matchSelected ? matchAlternates[matchSelected][1] : ''}
+        alternates={
+          matchSelected ? matchAlternatesRef.current[matchSelected][1] : ''
+        }
       />
     </header>
   );
