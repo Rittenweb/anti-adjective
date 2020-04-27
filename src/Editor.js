@@ -26,7 +26,8 @@ export default function Editor() {
       '#Adjective': `adjective`,
     });
 
-    if (adjNum <= matchesRef.current.length) {
+    let currentNodeIsAdj = sel.anchorNode.parentNode.className === 'adjective';
+    if (!currentNodeIsAdj && adjNum <= matchesRef.current.length) {
       matchesRef.current = [...document.querySelectorAll('.adjective')];
       localStorage.setItem('text', withMatches);
       return;
@@ -136,8 +137,6 @@ export default function Editor() {
   let verbAlternates = '';
   if (matchSelected) {
     let matchText = matchesRef.current[matchSelected - 1].innerText;
-    console.log('.' + matchText + '.');
-    console.log(matchAlternatesRef.current);
     let currentMatchAlternates = matchAlternatesRef.current[matchText];
     if (currentMatchAlternates) {
       nounAlternates = currentMatchAlternates[0];
