@@ -52,6 +52,12 @@
   min-width: 320px;
   padding: 1vh 5vh;
   text-align: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.toggle {
+  border: 1px solid blue;
 }
 
 .editor {

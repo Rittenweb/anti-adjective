@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
-import fetchAlternates from './fetchAlternates';
+import { fetchAlternatesAdj, fetchAlternatesAdv } from './fetchAlternates';
 import Sidebar from './Sidebar';
 
 export default function Editor() {
@@ -12,6 +12,7 @@ export default function Editor() {
     localStorage.getItem('text') || '<pre></pre>'
   );
   const [matchSelected, setMatchSelected] = useState(0);
+  const [toggleMode, setToggleMode] = useState(false);
   const matchesRef = useRef([]);
   const matchAlternatesRef = useRef({});
 
@@ -20,11 +21,37 @@ export default function Editor() {
     let sel = document.getSelection();
     const editorNode = e.target;
 
+    /*
+    let newTerms = words
+      .splitBefore('#Verb #Adverb+')
+      .splitAfter('#Verb #Adverb+')
+      .splitBefore('#Adverb+ #Verb')
+      .splitAfter('#Adverb+ #Verb')
+      .splitBefore('#Adjective+ #Noun')
+      .splitAfter('#Adjective+ #Noun')
+      .out('array');
+    e.target.innerText = '';
+    */
+
     let words = nlpHtml(editorNode.innerText);
-    let adjNum = words.match('#Adjective').out('array').length;
-    let withMatches = words.html({
-      '#Adjective': `adjective`,
-    });
+    let adjNum = 0;
+    let withMatches;
+
+    if (toggleMode) {
+      adjNum += words.match('#Adjective').out('array').length;
+      withMatches = words.html({
+        '#Adjective': `adjective`,
+      });
+    } else {
+      adjNum += words.match('#Verb #Adverb+').out('array').length;
+      adjNum += words.match('#Adverb+ #Verb').out('array').length;
+      adjNum += words.match('#Adjective+ #Noun').out('array').length;
+      withMatches = words.html({
+        '#Verb #Adverb+': 'adjective',
+        '#Adverb+ #Verb': 'adjective',
+        '#Adjective+ #Noun': 'adjective',
+      });
+    }
 
     let currentNodeIsAdj = sel.anchorNode.parentNode.className === 'adjective';
     if (!currentNodeIsAdj && adjNum <= matchesRef.current.length) {
@@ -52,18 +79,6 @@ export default function Editor() {
       }
     }
 
-    /*
-    let newTerms = words
-      .splitBefore('#Verb #Adverb+')
-      .splitAfter('#Verb #Adverb+')
-      .splitBefore('#Adverb+ #Verb')
-      .splitAfter('#Adverb+ #Verb')
-      .splitBefore('#Adjective+ #Noun')
-      .splitAfter('#Adjective+ #Noun')
-      .out('array');
-    e.target.innerText = '';
-    */
-
     localStorage.setItem('text', withMatches);
     setText(withMatches);
 
@@ -87,10 +102,17 @@ export default function Editor() {
 
     setMatchSelected(0);
 
-    matchAlternatesRef.current = fetchAlternates(
-      matchesRef.current,
-      matchAlternatesRef.current
-    );
+    if (toggleMode) {
+      matchAlternatesRef.current = fetchAlternatesAdj(
+        matchesRef.current,
+        matchAlternatesRef.current
+      );
+    } else {
+      matchAlternatesRef.current = fetchAlternatesAdv(
+        matchesRef.current,
+        matchAlternatesRef.current
+      );
+    }
   };
 
   const debouncedChangeFunction = debounce(changeFunction, 2000);
@@ -144,7 +166,10 @@ export default function Editor() {
     }
   }
 
-  console.log('rendered');
+  const handleToggle = function (e) {
+    let newMode = !toggleMode;
+    setToggleMode(newMode);
+  };
 
   const handleDownload = function (e) {
     let FileSaver = require('file-saver');
@@ -155,11 +180,18 @@ export default function Editor() {
     FileSaver.saveAs(blob, 'anti-adj.txt');
   };
 
+  console.log('rendered');
+
   return (
     <header className='App-header'>
       <Sidebar side='left' alternates={nounAlternates} />
       <div className='center'>
-        <div className='top-bar'>A N T I - A D J E C T I V E</div>
+        <div className='top-bar'>
+          A N T I - A D J E C T I V E
+          <div className='toggle' onClick={handleToggle}>
+            Toggle
+          </div>
+        </div>
         <div
           contentEditable='true'
           spellCheck='true'
