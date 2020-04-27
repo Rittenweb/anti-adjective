@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
+import fetchAlternates from './fetchAlternates';
 import Sidebar from './Sidebar';
 
 export default function Editor() {
@@ -85,46 +86,10 @@ export default function Editor() {
 
     setMatchSelected(0);
 
-    matchesRef.current.forEach((match, index) => {
-      console.log('called');
-      let alternatesArr = [];
-      fetch(`https://api.datamuse.com/words?rel_jja=${match.innerText}`, {
-        cache: 'no-cache',
-      })
-        .then((data) => {
-          return data.json();
-        })
-        .then((data) => {
-          let nounsArr = [];
-          data.forEach((alternate) => {
-            nounsArr.push(alternate.word);
-          });
-          alternatesArr.push(nounsArr);
-          return fetch(`https://api.datamuse.com/words?ml=${match.innerText}`);
-        })
-        .then((data) => {
-          return data.json();
-        })
-        .then((data) => {
-          let verbsArr = [];
-          data.forEach((alternate) => {
-            if (alternate.tags.includes('v')) {
-              let lexicon = {};
-              lexicon[`${alternate.word}`] = 'Verb';
-              let infinitive = nlp(alternate.word, lexicon)
-                .verbs()
-                .toInfinitive()
-                .text();
-              let newWord = infinitive ? infinitive : alternate.word;
-              if (!verbsArr.includes(newWord)) {
-                verbsArr.push(newWord);
-              }
-            }
-          });
-          alternatesArr.push(verbsArr);
-          matchAlternatesRef.current[match.innerText] = alternatesArr;
-        });
-    });
+    matchAlternatesRef.current = fetchAlternates(
+      matchesRef.current,
+      matchAlternatesRef.current
+    );
   };
 
   const debouncedChangeFunction = debounce(changeFunction, 2000);
@@ -167,23 +132,24 @@ export default function Editor() {
     document.execCommand('insertHTML', false, text);
   };
 
+  let nounAlternates = '';
+  let verbAlternates = '';
+  if (matchSelected) {
+    let matchText = matchesRef.current[matchSelected - 1].innerText;
+    console.log('.' + matchText + '.');
+    console.log(matchAlternatesRef.current);
+    let currentMatchAlternates = matchAlternatesRef.current[matchText];
+    if (currentMatchAlternates) {
+      nounAlternates = currentMatchAlternates[0];
+      verbAlternates = currentMatchAlternates[1];
+    }
+  }
+
   console.log('rendered');
 
   return (
     <header className='App-header'>
-      <Sidebar
-        side='left'
-        alternates={
-          matchSelected &&
-          matchAlternatesRef.current[
-            matchesRef.current[matchSelected - 1].innerText
-          ]
-            ? matchAlternatesRef.current[
-                matchesRef.current[matchSelected - 1].innerText
-              ][0]
-            : ''
-        }
-      />
+      <Sidebar side='left' alternates={nounAlternates} />
       <div className='center'>
         <div className='top-bar'>A N T I - A D J E C T I V E</div>
         <div
@@ -195,19 +161,7 @@ export default function Editor() {
           onPaste={pastePlainText}
           dangerouslySetInnerHTML={{ __html: text }}></div>
       </div>
-      <Sidebar
-        side='right'
-        alternates={
-          matchSelected &&
-          matchAlternatesRef.current[
-            matchesRef.current[matchSelected - 1].innerText
-          ]
-            ? matchAlternatesRef.current[
-                matchesRef.current[matchSelected - 1].innerText
-              ][1]
-            : ''
-        }
-      />
+      <Sidebar side='right' alternates={verbAlternates} />
     </header>
   );
 }
