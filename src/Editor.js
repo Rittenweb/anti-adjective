@@ -3,6 +3,9 @@ import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
 import { fetchAlternatesAdj, fetchAlternatesAdv } from './fetchAlternates';
+import tagText from './tagText';
+import getNodeOffsetFromBack from './getNodeOffsetFromBack';
+import getNewTargetTextNode from './getNewTargetTextNode';
 import Sidebar from './Sidebar';
 
 export default function Editor() {
@@ -21,87 +24,36 @@ export default function Editor() {
     let sel = document.getSelection();
     const editorNode = document.querySelector('.editor');
 
-    /*
-    let newTerms = words
-      .splitBefore('#Verb #Adverb+')
-      .splitAfter('#Verb #Adverb+')
-      .splitBefore('#Adverb+ #Verb')
-      .splitAfter('#Adverb+ #Verb')
-      .splitBefore('#Adjective+ #Noun')
-      .splitAfter('#Adjective+ #Noun')
-      .out('array');
-    e.target.innerText = '';
-    */
-
     let words = nlpHtml(editorNode.innerText);
-    let adjNum = 0;
-    let withMatches;
 
+    //If this function originated from the toggle button, it's state hasnt' been
+    //updated yet. So we have to use the opposite state then uptade it after.
     let targetIsToggleButton = e.target.className === 'toggle';
     let useToggleMode = targetIsToggleButton ? !toggleMode : toggleMode;
-    if (useToggleMode) {
-      adjNum += words.match('#Adjective').out('array').length;
-      withMatches = words.html({
-        '#Adjective': `adjective`,
-      });
-    } else {
-      adjNum += words.match('#Verb #Adverb+').out('array').length;
-      adjNum += words.match('#Adverb+ #Verb').out('array').length;
-      adjNum += words.match('#Adjective+ #Noun').out('array').length;
-      withMatches = words.html({
-        '#Verb #Adverb+': 'adjective',
-        '#Adverb+ #Verb': 'adjective',
-        '#Adjective+ #Noun': 'adjective',
-      });
-    }
 
+    let [matchNum, textWithMatches] = tagText(words, useToggleMode);
+
+    //Don't parse if the matches are unchanged or less than last time
+    //But if the event is toggle, need to re-parse
     let currentNodeIsAdj = sel.anchorNode.parentNode.className === 'adjective';
     if (
       !targetIsToggleButton &&
       !currentNodeIsAdj &&
-      adjNum <= matchesRef.current.length
+      matchNum <= matchesRef.current.length
     ) {
       matchesRef.current = [...document.querySelectorAll('.adjective')];
-      localStorage.setItem('text', editorNode.innerText);
+      localStorage.setItem('text', textWithMatches);
       return;
     }
 
-    let nodeOffsetFromBack;
+    //Save caret position before editor node refreshes.
+    let nodeOffsetFromBack = getNodeOffsetFromBack(sel);
 
-    let preNodeChildren = [];
+    localStorage.setItem('text', textWithMatches);
+    setText(textWithMatches);
 
-    for (let i = 0; i < editorNode.childNodes.length; i++) {
-      preNodeChildren = preNodeChildren.concat(
-        ...editorNode.childNodes[i].childNodes
-      );
-    }
-
-    for (let i = preNodeChildren.length - 1; i >= 0; i--) {
-      let currentChildTextNode = preNodeChildren[i].childNodes[0];
-
-      if (currentChildTextNode === sel.anchorNode) {
-        nodeOffsetFromBack = preNodeChildren.length - i;
-        break;
-      }
-    }
-
-    localStorage.setItem('text', withMatches);
-    setText(withMatches);
-
-    let newPreNodeChildren = editorNode.childNodes[0].childNodes;
-    let newPreNodeChildrenLength = newPreNodeChildren.length;
-
-    if (nodeOffsetFromBack > newPreNodeChildrenLength) {
-      nodeOffsetFromBack = newPreNodeChildrenLength;
-    }
-
-    if (typeof nodeOffsetFromBack !== 'number') {
-      nodeOffsetFromBack = 1;
-    }
-
-    let targetTextNode =
-      newPreNodeChildren[newPreNodeChildrenLength - nodeOffsetFromBack]
-        .childNodes[0];
+    //Editor's content refreshed after last line, so re-calculate and reset caret.
+    let targetTextNode = getNewTargetTextNode(nodeOffsetFromBack);
     sel.setPosition(targetTextNode, targetTextNode.length);
 
     matchesRef.current = [...document.querySelectorAll('.adjective')];
@@ -161,17 +113,6 @@ export default function Editor() {
     document.execCommand('insertHTML', false, text);
   };
 
-  let nounAlternates = '';
-  let verbAlternates = '';
-  if (matchSelected) {
-    let matchText = matchesRef.current[matchSelected - 1].innerText;
-    let currentMatchAlternates = matchAlternatesRef.current[matchText];
-    if (currentMatchAlternates) {
-      nounAlternates = currentMatchAlternates[0];
-      verbAlternates = currentMatchAlternates[1];
-    }
-  }
-
   const handleToggle = function (e) {
     let newMode = !toggleMode;
     changeFunction(e);
@@ -186,6 +127,17 @@ export default function Editor() {
     });
     FileSaver.saveAs(blob, 'anti-adj.txt');
   };
+
+  let nounAlternates = '';
+  let verbAlternates = '';
+  if (matchSelected) {
+    let matchText = matchesRef.current[matchSelected - 1].innerText;
+    let currentMatchAlternates = matchAlternatesRef.current[matchText];
+    if (currentMatchAlternates) {
+      nounAlternates = currentMatchAlternates[0];
+      verbAlternates = currentMatchAlternates[1];
+    }
+  }
 
   console.log('rendered');
 
