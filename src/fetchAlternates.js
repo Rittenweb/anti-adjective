@@ -26,7 +26,7 @@ export default function fetchAlternates(matches, matchAlternates) {
       .then((data) => {
         let verbsArr = [];
         data.forEach((alternate) => {
-          if (alternate.tags.includes('v')) {
+          if (alternate.tags && alternate.tags.includes('v')) {
             let lexicon = {};
             lexicon[`${alternate.word}`] = 'Verb';
             let infinitive = nlp(alternate.word, lexicon)

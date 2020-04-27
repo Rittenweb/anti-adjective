@@ -25,7 +25,10 @@
   top: 0;
   bottom: 0;
   background-color: darkgrey;
-  overflow-wrap: break-word;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
 }
 
 .sidebar-left {
@@ -34,6 +37,12 @@
 
 .sidebar-right {
   right: 0;
+}
+
+.alternate {
+  padding: 1px;
+  margin: 1px;
+  background-color: darkslategray;
 }
 
 .top-bar {
