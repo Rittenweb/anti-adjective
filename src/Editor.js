@@ -29,7 +29,7 @@ export default function Editor() {
     let currentNodeIsAdj = sel.anchorNode.parentNode.className === 'adjective';
     if (!currentNodeIsAdj && adjNum <= matchesRef.current.length) {
       matchesRef.current = [...document.querySelectorAll('.adjective')];
-      localStorage.setItem('text', withMatches);
+      localStorage.setItem('text', editorNode.innerText);
       return;
     }
 
@@ -146,6 +146,15 @@ export default function Editor() {
 
   console.log('rendered');
 
+  const handleDownload = function (e) {
+    let FileSaver = require('file-saver');
+    let editor = document.querySelector('.editor');
+    let blob = new Blob([`${editor.innerText}`], {
+      type: 'text/plain;charset=utf-8',
+    });
+    FileSaver.saveAs(blob, 'anti-adj.txt');
+  };
+
   return (
     <header className='App-header'>
       <Sidebar side='left' alternates={nounAlternates} />
@@ -161,6 +170,9 @@ export default function Editor() {
           dangerouslySetInnerHTML={{ __html: text }}></div>
       </div>
       <Sidebar side='right' alternates={verbAlternates} />
+      <div onClick={handleDownload} className='download'>
+        Download Text
+      </div>
     </header>
   );
 }
