@@ -19,7 +19,7 @@ export default function Editor() {
   const changeFunction = function (e) {
     setMatchSelected(0);
     let sel = document.getSelection();
-    const editorNode = e.target;
+    const editorNode = document.querySelector('.editor');
 
     /*
     let newTerms = words
@@ -37,7 +37,9 @@ export default function Editor() {
     let adjNum = 0;
     let withMatches;
 
-    if (toggleMode) {
+    let targetIsToggleButton = e.target.className === 'toggle';
+    let useToggleMode = targetIsToggleButton ? !toggleMode : toggleMode;
+    if (useToggleMode) {
       adjNum += words.match('#Adjective').out('array').length;
       withMatches = words.html({
         '#Adjective': `adjective`,
@@ -54,7 +56,11 @@ export default function Editor() {
     }
 
     let currentNodeIsAdj = sel.anchorNode.parentNode.className === 'adjective';
-    if (!currentNodeIsAdj && adjNum <= matchesRef.current.length) {
+    if (
+      !targetIsToggleButton &&
+      !currentNodeIsAdj &&
+      adjNum <= matchesRef.current.length
+    ) {
       matchesRef.current = [...document.querySelectorAll('.adjective')];
       localStorage.setItem('text', editorNode.innerText);
       return;
@@ -102,7 +108,7 @@ export default function Editor() {
 
     setMatchSelected(0);
 
-    if (toggleMode) {
+    if (useToggleMode) {
       matchAlternatesRef.current = fetchAlternatesAdj(
         matchesRef.current,
         matchAlternatesRef.current
@@ -168,6 +174,7 @@ export default function Editor() {
 
   const handleToggle = function (e) {
     let newMode = !toggleMode;
+    changeFunction(e);
     setToggleMode(newMode);
   };
 
