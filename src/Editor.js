@@ -29,7 +29,8 @@ export default function Editor() {
 
     //If this function originated from the toggle button, it's state hasnt' been
     //updated yet. So we have to use the opposite state then uptade it after.
-    let targetIsToggleButton = e.target.className === 'toggle';
+    let targetIsToggleButton =
+      e.target.className === 'toggle' || e.key === 'Alt';
     let useToggleMode = targetIsToggleButton ? !toggleMode : toggleMode;
 
     let [matchNum, textWithMatches] = tagText(words, useToggleMode);
@@ -82,7 +83,8 @@ export default function Editor() {
       e.key === 'ArrowRight' ||
       e.key === 'ArrowUp' ||
       e.key === 'ArrowDown' ||
-      e.key === 'Tab'
+      e.key === 'Tab' ||
+      e.key === 'Alt'
     ) {
       return;
     } else {
@@ -104,6 +106,11 @@ export default function Editor() {
         let sel = document.getSelection();
         sel.selectAllChildren(matchesRef.current[newMatchNumber - 1]);
       }
+    } else if (e.key === 'Alt') {
+      e.preventDefault();
+      let newMode = !toggleMode;
+      changeFunction(e);
+      setToggleMode(newMode);
     }
   };
 
