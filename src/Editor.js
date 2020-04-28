@@ -16,6 +16,7 @@ export default function Editor() {
   );
   const [matchSelected, setMatchSelected] = useState(0);
   const [toggleMode, setToggleMode] = useState(false);
+  const [color, setColor] = useState('green');
   const matchesRef = useRef([]);
   const matchAlternatesRef = useRef({});
 
@@ -119,6 +120,18 @@ export default function Editor() {
     setToggleMode(newMode);
   };
 
+  const handleGreen = function (e) {
+    setColor('green');
+  };
+
+  const handleBlue = function (e) {
+    setColor('blue');
+  };
+
+  const handlePurple = function (e) {
+    setColor('purple');
+  };
+
   const handleDownload = function (e) {
     let FileSaver = require('file-saver');
     let editor = document.querySelector('.editor');
@@ -147,8 +160,37 @@ export default function Editor() {
       <div className='center'>
         <div className='top-bar'>
           A N T I - A D J E C T I V E
-          <div className='toggle' onClick={handleToggle}>
-            Toggle
+          <div className='color-buttons'>
+            <div
+              className={
+                color === 'green'
+                  ? 'color-button color-selected'
+                  : 'color-button'
+              }
+              onClick={handleGreen}></div>
+            <div
+              className={
+                color === 'blue'
+                  ? 'color-button color-selected'
+                  : 'color-button'
+              }
+              onClick={handleBlue}></div>
+            <div
+              className={
+                color === 'purple'
+                  ? 'color-button color-selected'
+                  : 'color-button'
+              }
+              onClick={handlePurple}></div>
+          </div>
+          <div className='toggle-container'>
+            <span className={toggleMode ? 'off' : 'on'}>
+              (adv + vb) / (adj + n)
+            </span>
+            <div className='toggle' onClick={handleToggle}>
+              MODE
+            </div>
+            <span className={toggleMode ? 'on' : 'off'}>Just (adj)</span>
           </div>
         </div>
         <div
