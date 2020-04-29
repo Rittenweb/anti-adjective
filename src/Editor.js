@@ -27,8 +27,8 @@ export default function Editor() {
 
     let words = nlpHtml(editorNode.innerText);
 
-    //If this function originated from the toggle button, it's state hasnt' been
-    //updated yet. So we have to use the opposite state then uptade it after.
+    //If this function originated from a toggle command, it's state hasnt' been
+    //updated yet. So we have to use the opposite state then update it after.
     let targetIsToggleButton =
       e.target.className === 'toggle' || e.key === 'Alt';
     let useToggleMode = targetIsToggleButton ? !toggleMode : toggleMode;
@@ -166,38 +166,37 @@ export default function Editor() {
       <Sidebar side='left' alternates={nounAlternates} />
       <div className='center'>
         <div className='top-bar'>
-          A N T I - A D J E C T I V E
+          <span className='banner'>Anti-Adjective</span>
+          <span className='instruct'>(press TAB to select ADJ)</span>
           <div className='color-buttons'>
             <div
               className={
                 color === 'green'
-                  ? 'color-button color-selected'
-                  : 'color-button'
+                  ? 'green color-button color-selected'
+                  : 'green color-button'
               }
               onClick={handleGreen}></div>
             <div
               className={
                 color === 'blue'
-                  ? 'color-button color-selected'
-                  : 'color-button'
+                  ? 'blue color-button color-selected'
+                  : 'blue color-button'
               }
               onClick={handleBlue}></div>
             <div
               className={
                 color === 'purple'
-                  ? 'color-button color-selected'
-                  : 'color-button'
+                  ? 'purple color-button color-selected'
+                  : 'purple color-button'
               }
               onClick={handlePurple}></div>
           </div>
           <div className='toggle-container'>
-            <span className={toggleMode ? 'off' : 'on'}>
-              (adv + vb) / (adj + n)
-            </span>
+            <span className={toggleMode ? 'off' : 'on'}>(adv+vb)/(adj+n)</span>
             <div className='toggle' onClick={handleToggle}>
-              MODE
+              mode
             </div>
-            <span className={toggleMode ? 'on' : 'off'}>Just (adj)</span>
+            <span className={toggleMode ? 'on' : 'off'}>just (adj)</span>
           </div>
         </div>
         <div
@@ -210,9 +209,11 @@ export default function Editor() {
           dangerouslySetInnerHTML={{ __html: text }}></div>
       </div>
       <Sidebar side='right' alternates={verbAlternates} />
-      <div onClick={handleDownload} className='download'>
-        Download Text
-      </div>
+      <img
+        onClick={handleDownload}
+        className='download'
+        src={require('./download.svg')}
+        alt='click here to download'></img>
     </header>
   );
 }
