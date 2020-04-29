@@ -16,7 +16,7 @@ export default function Editor() {
   );
   const [matchSelected, setMatchSelected] = useState(0);
   const [toggleMode, setToggleMode] = useState(false);
-  const [color, setColor] = useState('green');
+  const [color, setColor] = useState('blue');
   const matchesRef = useRef([]);
   const matchAlternatesRef = useRef({});
 
@@ -128,14 +128,26 @@ export default function Editor() {
   };
 
   const handleGreen = function (e) {
+    document.documentElement.style.setProperty(`--color-lightest`, '#009888');
+    document.documentElement.style.setProperty(`--color-lighter`, '#007B6E');
+    document.documentElement.style.setProperty(`--color-darker`, '#004840');
+    document.documentElement.style.setProperty(`--color-darkest`, '#002421');
     setColor('green');
   };
 
   const handleBlue = function (e) {
+    document.documentElement.style.setProperty(`--color-lightest`, '#0b4edd');
+    document.documentElement.style.setProperty(`--color-lighter`, '#0b399a');
+    document.documentElement.style.setProperty(`--color-darker`, '#072054');
+    document.documentElement.style.setProperty(`--color-darkest`, '#020c22');
     setColor('blue');
   };
 
   const handlePurple = function (e) {
+    document.documentElement.style.setProperty(`--color-lightest`, '#9a76dc');
+    document.documentElement.style.setProperty(`--color-lighter`, '#7a61aa');
+    document.documentElement.style.setProperty(`--color-darker`, '#302641');
+    document.documentElement.style.setProperty(`--color-darkest`, '#120e1a');
     setColor('purple');
   };
 
@@ -162,11 +174,11 @@ export default function Editor() {
   console.log('rendered');
 
   return (
-    <header className='App-header'>
+    <div className='app-container'>
       <Sidebar side='left' alternates={nounAlternates} />
       <div className='center'>
-        <div className='top-bar'>
-          <span className='banner'>Anti-Adjective</span>
+        <header className='top-bar'>
+          <span>Anti-Adjective</span>
           <span className='instruct'>(press TAB to select ADJ)</span>
           <div className='color-buttons'>
             <div
@@ -198,15 +210,15 @@ export default function Editor() {
             </div>
             <span className={toggleMode ? 'on' : 'off'}>just (adj)</span>
           </div>
-        </div>
-        <div
+        </header>
+        <main
           contentEditable='true'
           spellCheck='true'
           className='editor'
           onKeyUp={persistingChangeFunction}
           onKeyDown={specialCommandsFunction}
           onPaste={pastePlainText}
-          dangerouslySetInnerHTML={{ __html: text }}></div>
+          dangerouslySetInnerHTML={{ __html: text }}></main>
       </div>
       <Sidebar side='right' alternates={verbAlternates} />
       <img
@@ -214,6 +226,6 @@ export default function Editor() {
         className='download'
         src={require('./download.svg')}
         alt='click here to download'></img>
-    </header>
+    </div>
   );
 }
