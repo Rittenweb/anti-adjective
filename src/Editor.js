@@ -6,6 +6,8 @@ import { fetchAlternatesAdj, fetchAlternatesAdv } from './fetchAlternates';
 import tagText from './tagText';
 import getNodeOffsetFromBack from './getNodeOffsetFromBack';
 import getNewTargetTextNode from './getNewTargetTextNode';
+import ColorButtons from './ColorButtons';
+import ModeToggler from './ModeToggler';
 import Sidebar from './Sidebar';
 
 export default function Editor() {
@@ -16,28 +18,27 @@ export default function Editor() {
   );
   const [matchSelected, setMatchSelected] = useState(0);
   const [toggleMode, setToggleMode] = useState(false);
-  const [color, setColor] = useState('blue');
   const matchesRef = useRef([]);
   const matchAlternatesRef = useRef({});
   const nodeOffsetFromBackRef = useRef(0);
 
   const changeFunction = function (toggling) {
     setMatchSelected(0);
-    let sel = document.getSelection();
+    let selection = document.getSelection();
     const editorNode = document.querySelector('.editor');
 
     let words = nlpHtml(editorNode.innerText);
 
+    //Get newly-tagged version of current editor content
     let [matchNum, textWithMatches] = tagText(words, toggleMode);
-
-    let targetIsToggleButton = toggling;
 
     //Don't rebuild if the matches are unchanged or less than last time
     //But if the event is toggle, need to re-build
     let currentNodeIsAdj =
-      sel.anchorNode && sel.anchorNode.parentNode.className === 'adjective';
+      selection.anchorNode &&
+      selection.anchorNode.parentNode.className === 'adjective';
     if (
-      !targetIsToggleButton &&
+      !toggling &&
       !currentNodeIsAdj &&
       matchNum <= matchesRef.current.length
     ) {
@@ -47,7 +48,7 @@ export default function Editor() {
     }
 
     //Save caret position before editor node refreshes.
-    nodeOffsetFromBackRef.current = getNodeOffsetFromBack(sel);
+    nodeOffsetFromBackRef.current = getNodeOffsetFromBack(selection);
 
     localStorage.setItem('text', textWithMatches);
     setText(textWithMatches);
@@ -59,16 +60,19 @@ export default function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toggleMode]);
 
+  //Whenever the tagged editor content is updated, asynchronously update the
+  //reference to current matches and the alternates to those matches as well.
   useEffect(() => {
+    //Access the relative node position of the previous caret position and
+    //re-calculate it with the new DOM content.
     let targetTextNode = getNewTargetTextNode(nodeOffsetFromBackRef.current);
-    let sel = document.getSelection();
-    sel.setPosition(targetTextNode, targetTextNode.length);
+    let selection = document.getSelection();
+    selection.setPosition(targetTextNode, targetTextNode.length);
 
     matchesRef.current = [...document.querySelectorAll('.adjective')];
 
     setMatchSelected(0);
 
-    console.log('called');
     if (toggleMode) {
       matchAlternatesRef.current = fetchAlternatesAdj(
         matchesRef.current,
@@ -83,9 +87,12 @@ export default function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
+  //So the parse/rebuild function only runs after the user has
+  //stopped typing for at least two seconds.
   const debouncedChangeFunction = debounce(changeFunction, 2000);
 
-  const persistingChangeFunction = function (e) {
+  //No need to re-parse if the keystrokes are not inputting characters
+  const filteredChangeFunction = function (e) {
     if (
       e.key === 'ArrowLeft' ||
       e.key === 'ArrowRight' ||
@@ -96,11 +103,13 @@ export default function Editor() {
     ) {
       return;
     } else {
-      debouncedChangeFunction(e.nativeEvent);
+      debouncedChangeFunction();
     }
   };
 
-  const specialCommandsFunction = function (e) {
+  //Tab advances and sets selected match number to then determine sidebar display
+  //Alt is the same as clicking the MODE button
+  const handleSpecialCommands = function (e) {
     if (e.key === 'Tab') {
       e.preventDefault();
       if (matchesRef.current.length) {
@@ -117,11 +126,11 @@ export default function Editor() {
     } else if (e.key === 'Alt') {
       e.preventDefault();
       let newMode = !toggleMode;
-      changeFunction(e);
       setToggleMode(newMode);
     }
   };
 
+  //Contenteditable elements paste with formatting included by default
   const pastePlainText = function (e) {
     e.preventDefault();
 
@@ -132,30 +141,6 @@ export default function Editor() {
   const handleToggle = function (e) {
     let newMode = !toggleMode;
     setToggleMode(newMode);
-  };
-
-  const handleGreen = function (e) {
-    document.documentElement.style.setProperty(`--color-lightest`, '#009888');
-    document.documentElement.style.setProperty(`--color-lighter`, '#007B6E');
-    document.documentElement.style.setProperty(`--color-darker`, '#004840');
-    document.documentElement.style.setProperty(`--color-darkest`, '#002421');
-    setColor('green');
-  };
-
-  const handleBlue = function (e) {
-    document.documentElement.style.setProperty(`--color-lightest`, '#0b4edd');
-    document.documentElement.style.setProperty(`--color-lighter`, '#0b399a');
-    document.documentElement.style.setProperty(`--color-darker`, '#072054');
-    document.documentElement.style.setProperty(`--color-darkest`, '#020c22');
-    setColor('blue');
-  };
-
-  const handlePurple = function (e) {
-    document.documentElement.style.setProperty(`--color-lightest`, '#9a76dc');
-    document.documentElement.style.setProperty(`--color-lighter`, '#7a61aa');
-    document.documentElement.style.setProperty(`--color-darker`, '#302641');
-    document.documentElement.style.setProperty(`--color-darkest`, '#120e1a');
-    setColor('purple');
   };
 
   const handleDownload = function (e) {
@@ -178,8 +163,6 @@ export default function Editor() {
     }
   }
 
-  console.log('rendered');
-
   return (
     <div className='app-container'>
       <Sidebar side='left' alternates={nounAlternates} />
@@ -187,43 +170,15 @@ export default function Editor() {
         <header className='top-bar'>
           <span>Anti-Adjective</span>
           <span className='instruct'>(press TAB to select ADJ)</span>
-          <div className='color-buttons'>
-            <div
-              className={
-                color === 'green'
-                  ? 'green color-button color-selected'
-                  : 'green color-button'
-              }
-              onClick={handleGreen}></div>
-            <div
-              className={
-                color === 'blue'
-                  ? 'blue color-button color-selected'
-                  : 'blue color-button'
-              }
-              onClick={handleBlue}></div>
-            <div
-              className={
-                color === 'purple'
-                  ? 'purple color-button color-selected'
-                  : 'purple color-button'
-              }
-              onClick={handlePurple}></div>
-          </div>
-          <div className='toggle-container'>
-            <span className={toggleMode ? 'off' : 'on'}>(adv+vb)/(adj+n)</span>
-            <div className='toggle' onClick={handleToggle}>
-              mode
-            </div>
-            <span className={toggleMode ? 'on' : 'off'}>just (adj)</span>
-          </div>
+          <ColorButtons />
+          <ModeToggler mode={toggleMode} handler={handleToggle} />
         </header>
         <main
           contentEditable='true'
           spellCheck='true'
           className='editor'
-          onKeyUp={persistingChangeFunction}
-          onKeyDown={specialCommandsFunction}
+          onKeyUp={filteredChangeFunction}
+          onKeyDown={handleSpecialCommands}
           onPaste={pastePlainText}
           dangerouslySetInnerHTML={{ __html: text }}></main>
       </div>
@@ -232,7 +187,7 @@ export default function Editor() {
         onClick={handleDownload}
         className='download'
         src={require('./download.svg')}
-        alt='click here to download'></img>
+        alt='click here to download .txt file'></img>
     </div>
   );
 }
