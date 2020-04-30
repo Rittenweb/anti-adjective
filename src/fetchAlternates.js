@@ -5,7 +5,9 @@ const fetchAlternatesAdj = function (matches, matchAlternates) {
   matches.forEach((match, index) => {
     let matchText = match.innerText.replace(/[^a-zA-Z\s]/g, "");
     let alternatesArr = [];
-    fetch(`https://api.datamuse.com/words?rel_jja=${matchText}`)
+    fetch(`https://api.datamuse.com/words?rel_jja=${matchText}`, {
+        cache: 'no-cache',
+      })
       .then((data) => {
         return data.json();
       })
@@ -15,7 +17,9 @@ const fetchAlternatesAdj = function (matches, matchAlternates) {
           nounsArr.push(alternate.word);
         });
         alternatesArr.push(nounsArr);
-        return fetch(`https://api.datamuse.com/words?ml=${matchText}`);
+        return fetch(`https://api.datamuse.com/words?ml=${matchText}`, {
+          cache: 'no-cache',
+        });
       })
       .then((data) => {
         return data.json();
@@ -49,7 +53,9 @@ const fetchAlternatesAdv = function (matches, matchAlternates) {
   matches.forEach((match, index) => {
     let matchText = nlp(match.innerText).verbs().toInfinitive().all().text().replace(/[^a-zA-Z\s]/g, "");
     let alternatesArr = [];
-    fetch(`https://api.datamuse.com/words?ml=${matchText}`)
+    fetch(`https://api.datamuse.com/words?ml=${matchText}`, {
+        cache: 'no-cache',
+      })
       .then((data) => {
         return data.json();
       })
