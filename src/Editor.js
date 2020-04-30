@@ -20,7 +20,7 @@ export default function Editor() {
   const [toggleMode, setToggleMode] = useState(false);
   const matchesRef = useRef([]);
   const matchAlternatesRef = useRef({});
-  const nodeOffsetFromBackRef = useRef(0);
+  const nodeOffsetFromBackRef = useRef(1);
 
   const changeFunction = function (toggling) {
     setMatchSelected(0);
