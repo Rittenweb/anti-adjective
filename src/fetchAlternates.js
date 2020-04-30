@@ -4,11 +4,8 @@ const fetchAlternatesAdj = function (matches, matchAlternates) {
 
   matches.forEach((match, index) => {
     let matchText = match.innerText.replace(/[^a-zA-Z\s]/g, "");
-    console.log('called');
     let alternatesArr = [];
-    fetch(`https://api.datamuse.com/words?rel_jja=${matchText}`, {
-        cache: 'no-cache',
-      })
+    fetch(`https://api.datamuse.com/words?rel_jja=${matchText}`)
       .then((data) => {
         return data.json();
       })
@@ -51,11 +48,8 @@ const fetchAlternatesAdv = function (matches, matchAlternates) {
 
   matches.forEach((match, index) => {
     let matchText = nlp(match.innerText).verbs().toInfinitive().all().text().replace(/[^a-zA-Z\s]/g, "");
-    console.log('called');
     let alternatesArr = [];
-    fetch(`https://api.datamuse.com/words?ml=${matchText}`, {
-        cache: 'no-cache',
-      })
+    fetch(`https://api.datamuse.com/words?ml=${matchText}`)
       .then((data) => {
         return data.json();
       })

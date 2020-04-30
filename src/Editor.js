@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import debounce from './debounce';
 import nlp from 'compromise';
 import nlpo from 'compromise-output';
@@ -19,25 +19,23 @@ export default function Editor() {
   const [color, setColor] = useState('blue');
   const matchesRef = useRef([]);
   const matchAlternatesRef = useRef({});
+  const nodeOffsetFromBackRef = useRef(0);
 
-  const changeFunction = function (e) {
+  const changeFunction = function (toggling) {
     setMatchSelected(0);
     let sel = document.getSelection();
     const editorNode = document.querySelector('.editor');
 
     let words = nlpHtml(editorNode.innerText);
 
-    //If this function originated from a toggle command, it's state hasnt' been
-    //updated yet. So we have to use the opposite state then update it after.
-    let targetIsToggleButton =
-      e.target.className === 'toggle' || e.key === 'Alt';
-    let useToggleMode = targetIsToggleButton ? !toggleMode : toggleMode;
+    let [matchNum, textWithMatches] = tagText(words, toggleMode);
 
-    let [matchNum, textWithMatches] = tagText(words, useToggleMode);
+    let targetIsToggleButton = toggling;
 
-    //Don't parse if the matches are unchanged or less than last time
-    //But if the event is toggle, need to re-parse
-    let currentNodeIsAdj = sel.anchorNode.parentNode.className === 'adjective';
+    //Don't rebuild if the matches are unchanged or less than last time
+    //But if the event is toggle, need to re-build
+    let currentNodeIsAdj =
+      sel.anchorNode && sel.anchorNode.parentNode.className === 'adjective';
     if (
       !targetIsToggleButton &&
       !currentNodeIsAdj &&
@@ -49,20 +47,29 @@ export default function Editor() {
     }
 
     //Save caret position before editor node refreshes.
-    let nodeOffsetFromBack = getNodeOffsetFromBack(sel);
+    nodeOffsetFromBackRef.current = getNodeOffsetFromBack(sel);
 
     localStorage.setItem('text', textWithMatches);
     setText(textWithMatches);
+  };
 
-    //Editor's content refreshed after last line, so re-calculate and reset caret.
-    let targetTextNode = getNewTargetTextNode(nodeOffsetFromBack);
+  //Call the change function with a toggling flag when toggleMode is changed
+  useEffect(() => {
+    changeFunction(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toggleMode]);
+
+  useEffect(() => {
+    let targetTextNode = getNewTargetTextNode(nodeOffsetFromBackRef.current);
+    let sel = document.getSelection();
     sel.setPosition(targetTextNode, targetTextNode.length);
 
     matchesRef.current = [...document.querySelectorAll('.adjective')];
 
     setMatchSelected(0);
 
-    if (useToggleMode) {
+    console.log('called');
+    if (toggleMode) {
       matchAlternatesRef.current = fetchAlternatesAdj(
         matchesRef.current,
         matchAlternatesRef.current
@@ -73,7 +80,8 @@ export default function Editor() {
         matchAlternatesRef.current
       );
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
 
   const debouncedChangeFunction = debounce(changeFunction, 2000);
 
@@ -123,7 +131,6 @@ export default function Editor() {
 
   const handleToggle = function (e) {
     let newMode = !toggleMode;
-    changeFunction(e);
     setToggleMode(newMode);
   };
 
