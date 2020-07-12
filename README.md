@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Anti-Adjective Editor
@@ -41,4 +42,4 @@ There are three selectable color schemes at the top and a bottom-right button to
 
 As of now, when the parsing function is run the text caret jumps to the end of the current sentence or the current adjective-chunk. This is intentional behavior, because editor content is re-created on every parse, so the default behavior would be for the caret to jump to the beginning to the editor (which is really bad). Because the editor content might change during the new parse in an infinite variety of ways, it's proved difficult to re-calculate the same caret position in a potentially completely different DOM tree. The current algorithm makes fallable but usually-sound assumptions, for example, that most of the edited content will be located before the current caret position, rather than after. The current behavior obviously not ideal. The next version will try to preserve caret position within the DOM node rather than simply jumping to the end.
 
-A mode to temporarily turn off parsing altogether might be useful too.
+# A mode to temporarily turn off parsing altogether might be useful too.
