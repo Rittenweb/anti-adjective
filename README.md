@@ -4,6 +4,12 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 A plain-text editor with one function: to highlight adjective and adverb use and provide alternatives in the form of verbs or nouns.
 
+![Screenshot](readme_screenshot.png)
+
+### Installation
+
+Simply clone the repository to your computer, run `npm install` and then `npm start`. It should be running on localhost:3000
+
 ### Justification
 
 Adjectives are static:
