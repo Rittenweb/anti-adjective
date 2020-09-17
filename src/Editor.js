@@ -13,9 +13,7 @@ import Sidebar from './Sidebar';
 export default function Editor() {
   const nlpHtml = nlp.extend(nlpo);
 
-  const [text, setText] = useState(
-    localStorage.getItem('text') || '<pre></pre>'
-  );
+  const [text, setText] = useState(localStorage.getItem('text') || '<pre></pre>');
   const [matchSelected, setMatchSelected] = useState(0);
   const [toggleMode, setToggleMode] = useState(false);
   const matchesRef = useRef([]);
@@ -34,14 +32,8 @@ export default function Editor() {
 
     //Don't rebuild if the matches are unchanged or less than last time
     //But if the event is toggle, need to re-build
-    let currentNodeIsAdj =
-      selection.anchorNode &&
-      selection.anchorNode.parentNode.className === 'adjective';
-    if (
-      !toggling &&
-      !currentNodeIsAdj &&
-      matchNum <= matchesRef.current.length
-    ) {
+    let currentNodeIsAdj = selection.anchorNode && selection.anchorNode.parentNode.className === 'adjective';
+    if (!toggling && !currentNodeIsAdj && matchNum <= matchesRef.current.length) {
       matchesRef.current = [...document.querySelectorAll('.adjective')];
       localStorage.setItem('text', textWithMatches);
       return;
@@ -74,15 +66,9 @@ export default function Editor() {
     setMatchSelected(0);
 
     if (toggleMode) {
-      matchAlternatesRef.current = fetchAlternatesAdj(
-        matchesRef.current,
-        matchAlternatesRef.current
-      );
+      matchAlternatesRef.current = fetchAlternatesAdj(matchesRef.current, matchAlternatesRef.current);
     } else {
-      matchAlternatesRef.current = fetchAlternatesAdv(
-        matchesRef.current,
-        matchAlternatesRef.current
-      );
+      matchAlternatesRef.current = fetchAlternatesAdv(matchesRef.current, matchAlternatesRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
@@ -186,7 +172,7 @@ export default function Editor() {
       <img
         onClick={handleDownload}
         className='download'
-        src={require('./download.svg')}
+        src={require('./assets/download.svg')}
         alt='click here to download .txt file'></img>
     </div>
   );
